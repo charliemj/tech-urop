@@ -1,4 +1,4 @@
-var spreadsheet = SpreadsheetApp.openById("@@events_sheet");
+var spreadsheet = SpreadsheetApp.openById("@@events_sheet_url");
 var sheets = [spreadsheet.getSheetByName("AutoEvents"), spreadsheet.getSheetByName("Events"), spreadsheet.getSheetByName("UncliamedAutoEvents")];
 
 function removeAllOutdated(){
