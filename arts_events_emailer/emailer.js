@@ -1,1 +1,0 @@
-//Begin based off of this tutorial: https://developers.google.com/apps-script/articles/sending_emails
