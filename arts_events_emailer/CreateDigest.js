@@ -1,5 +1,5 @@
 //Begin based off of this tutorial: https://developers.google.com/apps-script/articles/sending_emails
- var spreadsheet = SpreadsheetApp.openByUrl("@@sheet_url");
+ var spreadsheet = SpreadsheetApp.openByUrl("@@events_sheet_url");
 
 function isNA(str){
   str = str.toString();
