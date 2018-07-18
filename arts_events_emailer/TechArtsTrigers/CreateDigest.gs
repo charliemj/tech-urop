@@ -39,7 +39,7 @@ function processDataRange(dataRange){
   // Filter out empty lines
   data = data.filter(
     function (row){
-      var anyNA = isNA(row[dueDate]) || isNA(row[date]) || isNA(row[type]) || isNA(row[name]) || isNA(row[venue]);
+      var anyNA = isNA(row[dueDate]) || isNA(row[date]) || isNA(row[type]) || isNA(row[name]);
       if(!anyNA){
         var read = row[dueDate] + " " + row[date] + " " + row[type] + " " + row[name] + " " + row[venue];
         Logger.log("THING!!! " + read);
@@ -150,7 +150,7 @@ function makeMessage(data){
     var startTime = Utilities.formatDate(new Date(row[time]), "GMT-05", "hh:mm a");  
     
     message += "On " + startDay + ", " + startTime; //On date  
-    message += " at " + row[venue]; // at venue
+    message += (isNA(row[venue])) ? "" : " at " + row[venue]; // at venue
     message += "\n";
   }
   
