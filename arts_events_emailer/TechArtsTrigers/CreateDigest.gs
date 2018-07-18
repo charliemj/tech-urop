@@ -1,14 +1,22 @@
 var spreadsheet = SpreadsheetApp.openById("@@SheetID");
 var form        = FormApp.openById("@@FormID");
+var eventForm   = FormApp.openById("@@EventFormID");
 
 //Colnum Names
-var dueDate = 0,
-    date = 1,
-    time = 2,
-    type = 3,
-    name = 4,
-    venue = 5,
-    claimerEmail = 6;
+var indeces = {
+  "Issue (Article Due Date)": 0,
+  "Date of Event": 1,
+  "Time of Event": 2,
+  "Type": 3,
+  "Event Name": 4,
+  "Venue": 5,
+}
+var dueDate = indeces["Issue (Article Due Date)"],
+    date = indeces["Date of Event"],
+    time = indeces["Time of Event"],
+    type = indeces["Type"],
+    name = indeces["Event Name"],
+    venue = indeces["Venue"];
 
 function isNA(str){
   str = str.toString();
@@ -20,8 +28,12 @@ function processForm(){
   var sheet = spreadsheet.getSheetByName("Events");
   var rangeSpace = "A2:F";
   var dataRange = sheet.getRange(rangeSpace);
-  var data = processDataRange(dataRange);
+  var eventItems = eventForm.getItems();
   
+  var required = getRequired(eventItems);
+  var data = processDataRange(dataRange, required);
+  
+  Logger.log(data);
   updateForm(data);
   
   return data;
@@ -32,16 +44,47 @@ function updateFormAndSendDigest(){
   sendDigest(data);
 }
 
-function processDataRange(dataRange){
+function getRequired(items){
+  var required = items.filter(function(item){
+    var unbox;
+    switch(item.getType()){
+      case FormApp.ItemType.DATE :
+        unbox = item.asDateItem();
+        break;
+      case FormApp.ItemType.TIME :
+        unbox = item.asTimeItem();
+        break;
+      case FormApp.ItemType.TEXT :
+        unbox = item.asTextItem();
+        break;
+      case FormApp.ItemType.MULTIPLE_CHOICE :
+        unbox = item.asMultipleChoiceItem();
+        break;
+      default :
+        return false;
+    }
+    return unbox.isRequired();
+  });
+  var index = required.map(function(item){
+    return indeces[item.getTitle()];
+  });
+  return index;
+}
+
+function processDataRange(dataRange,required){
   // Fetch values for each row in the Range.
   var data = dataRange.getValues();
   
   // Filter out empty lines
   data = data.filter(
     function (row){
-      var anyNA = isNA(row[dueDate]) || isNA(row[date]) || isNA(row[type]) || isNA(row[name]);
+      var anyNA = required.reduce(function(acc,ind){
+        return acc || isNA(row[ind]);
+      }, false);
       if(!anyNA){
-        var read = row[dueDate] + " " + row[date] + " " + row[type] + " " + row[name] + " " + row[venue];
+        var read = required.reduce(function(acc,ind){
+          return acc + " " + row[ind];
+        }, "");
         Logger.log("THING!!! " + read);
         return true;
       }
@@ -143,13 +186,16 @@ function makeMessage(data){
   for (i in data) {
     var row = data[i];
     
-    message += "\n" + row[type] + ": " + row[name]; //Type: Event
+    message += "\n"; 
+    message += (isNA(row[type])) ? "" : row[type] + ": ";
+    message += (isNA(row[name])) ? "" : row[name]; //Type: Event
     message += "\n- "; // new line
      
     var startDay = Utilities.formatDate(new Date(row[date]), "GMT-05", "E M/d");
     var startTime = Utilities.formatDate(new Date(row[time]), "GMT-05", "hh:mm a");  
     
-    message += "On " + startDay + ", " + startTime; //On date  
+    message += (isNA(row[date])) ? "" : "On " + startDay; //On date
+    message += (isNA(row[time])) ? "" : ", " + startTime; //, time
     message += (isNA(row[venue])) ? "" : " at " + row[venue]; // at venue
     message += "\n";
   }
